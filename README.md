@@ -12,4 +12,19 @@ In this example, the true counts and ref quants have a spearman correlation of ~
 low (in spearman) mostly because the read depth is low.  However, this is about what you should be aiming for in terms of the accuracy 
 of your solution.
 
+To compute these correlations above, very small predicted values were first truncated to 0.  You can use the snippet of code below to compute your 
+estimates' correlation with the truth:
 
+```python
+def get_metrics(truth, pred):
+  # truncate small values
+  y = pd.read_csv(pred, sep='\t')
+  y.loc[(y.est_frag < 1e-8), 'est_frag'] = 0
+
+  x = pd.read_csv(truth, sep='\t')
+  m = pd.merge(x, y, left_on='name', right_on='name', how='outer')
+  metrics = {}
+  for ctype in ["spearman", "pearson"]:
+    metrics[ctype] = m[['est_frag', 'true_count']].corr(method=ctype)['est_frag']['true_count']
+  return metrics
+```
